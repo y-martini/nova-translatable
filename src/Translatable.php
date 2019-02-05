@@ -118,4 +118,54 @@ class Translatable extends Field
     {
         return $this->withMeta(['trix' => true]);
     }
+
+    /**
+     * Set the validation rules for the field.
+     *
+     * @param  callable|array|string  $rules
+     * @return $this
+     */
+    public function rules($rules)
+    {
+      return parent::rules($this->transformRules($rules));
+    }
+
+    /**
+     * Set the creation validation rules for the field.
+     *
+     * @param  callable|array|string  $rules
+     * @return $this
+     */
+    public function creationRules($rules)
+    {
+      return parent::creationRules($this->transformRules($rules));
+    }
+
+    /**
+     * Set the creation validation rules for the field.
+     *
+     * @param  callable|array|string  $rules
+     * @return $this
+     */
+    public function updateRules($rules)
+    {
+      return parent::updateRules($this->transformRules($rules));
+    }
+
+    private function transformRules($rules){
+      return [function($attribute, $value, $fail) use ($rules) {
+        $r = [];
+        foreach (array_keys(config('translatable.locales')) as $locale)
+          $r[$locale] = $rules;
+
+        $validator = validator($value, $r);
+        if ($validator->fails()) {
+          foreach ($validator->errors()->all() as $message) {
+            return $fail($message);
+          }
+        }
+
+        return null;
+      }];
+    }
 }
