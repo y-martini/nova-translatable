@@ -1,5 +1,5 @@
 <template>
-    <default-field :field="field">
+    <default-field :field="field" :full-width-content="field.tiny">
         <template slot="field">
             <a 
                 class="inline-block font-bold cursor-pointer mr-2 animate-text-color select-none" 
@@ -18,7 +18,7 @@
                 :class="errorClasses"
                 :placeholder="field.name"
                 v-model="value[currentLocale]"
-                v-if="!field.singleLine && !field.trix"
+                v-if="!field.singleLine && !field.trix && !field.tiny"
                 @keydown.tab="handleTab"
             ></textarea>
 
@@ -31,6 +31,15 @@
                     @change="handleChange"
                     
                 />
+            </div>
+
+            <div v-if="field.tiny" class="mt-4">
+                <tiny ref="field"
+                      :value="value[currentLocale]"
+                      :attribute="field.attribute"
+                      :options="field.tinyOptions"
+                      :api-key="field.tinyApi"
+                      @change="handleChange"/>
             </div>
 
             <input 
@@ -55,6 +64,7 @@
 <script>
 
 import Trix from '../Trix'
+import TinyMCE from '../TinyMCE'
 
 import { FormField, HandlesValidationErrors } from 'laravel-nova'
 import { EventBus } from '../event-bus';
@@ -64,7 +74,8 @@ export default {
 
     props: ['resourceName', 'resourceId', 'field'],
 
-    components: { Trix },
+    components: { Trix,
+                  'tiny': TinyMCE },
 
     data() {
         return {
@@ -116,7 +127,7 @@ export default {
                 this.currentLocale = locale;
 
                 this.$nextTick(() => {
-                    if (this.field.trix) {
+                    if (this.field.trix || this.field.tiny) {
                         this.$refs.field.update()
                     } else {
                         this.$refs.field.focus()

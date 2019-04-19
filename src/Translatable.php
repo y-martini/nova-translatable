@@ -2,6 +2,7 @@
 
 namespace YesWeDev\Nova\Translatable;
 
+use Illuminate\Contracts\Validation\Rule;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Fields\Field;
 
@@ -32,7 +33,9 @@ class Translatable extends Field
 
         $this->withMeta([
             'locales' => $locales,
-            'indexLocale' => app()->getLocale()
+            'indexLocale' => app()->getLocale(),
+            'tinyApi' => config('nova.tiny_mce.api_key'),
+            'tinyOptions' => config('nova.tiny_mce.options')
         ]);
     }
 
@@ -120,14 +123,42 @@ class Translatable extends Field
     }
 
     /**
+     * Use TinyMCE Editor.
+     */
+    public function tiny()
+    {
+        return $this->withMeta(['tiny' => true]);
+    }
+
+    /**
+     * Allow to pass any existing TinyMCE option to the editor.
+     * Consult the TinyMCE documentation [https://github.com/tinymce/tinymce-vue]
+     * to view the list of all the available options.
+     *
+     * @param  array $options
+     * @return self
+     */
+    public function tinyOptions(array $options)
+    {
+        $currentOptions = $this->meta['tinyOptions'];
+
+        return $this->withMeta(
+            [
+                'tinyOptions' => array_merge($currentOptions, $options)
+            ]
+        );
+    }
+
+    /**
      * Set the validation rules for the field.
      *
-     * @param  callable|array|string  $rules
+     * @param  callable|array|string $rules
      * @return $this
      */
     public function rules($rules)
     {
-      return parent::rules($this->transformRules($rules));
+      parent::rules($this->transformRules(($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules));
+      return $this;
     }
 
     /**
@@ -138,25 +169,30 @@ class Translatable extends Field
      */
     public function creationRules($rules)
     {
-      return parent::creationRules($this->transformRules($rules));
+      parent::creationRules($this->transformRules(($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules));
+      return $this;
     }
 
     /**
      * Set the creation validation rules for the field.
      *
-     * @param  callable|array|string  $rules
+     * @param  callable|array|string $rules
      * @return $this
      */
     public function updateRules($rules)
     {
-      return parent::updateRules($this->transformRules($rules));
+      parent::updateRules($this->transformRules(($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules));
+      return $this;
     }
 
     private function transformRules($rules){
       return [function($attribute, $value, $fail) use ($rules) {
         $r = [];
-        foreach (array_keys(config('translatable.locales')) as $locale)
-          $r[$locale] = $rules;
+        foreach (array_keys(config('translatable.locales')) as $locale){
+            $r[$locale] = [];
+            foreach ($rules as $rule)
+                $r[$locale] = array_merge($r[$locale], is_string($rule) ? explode('|', $rule) : [$rule]);
+        }
 
         $validator = validator($value, $r);
         if ($validator->fails()) {
@@ -165,7 +201,7 @@ class Translatable extends Field
           }
         }
 
-        return null;
+        return true;
       }];
     }
 }
