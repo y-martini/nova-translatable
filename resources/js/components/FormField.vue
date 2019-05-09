@@ -144,7 +144,7 @@ export default {
         },
 
         handleTab(e) {
-            const currentIndex = this.locales.indexOf(this.currentLocale)
+            const currentIndex = this.locales.indexOf(this.currentLocale);
             if (!e.shiftKey) {
                 if (currentIndex < this.locales.length - 1) {
                     e.preventDefault();
@@ -162,8 +162,8 @@ export default {
     computed: {
         computedWidth() {
             return {
-                'w-1/2': !this.field.trix,
-                'w-4/5': this.field.trix
+                'w-1/2': !this.field.trix && !this.field.tiny,
+                'w-4/5': this.field.trix || this.field.tiny
             }
         }
     }
