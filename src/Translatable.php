@@ -48,16 +48,12 @@ class Translatable extends Field
      */
     protected function resolveAttribute($resource, $attribute)
     {
-        $results = [];
-        if ( class_exists('\Spatie\Translatable\TranslatableServiceProvider') ) {
+        if ( class_exists('\Spatie\Translatable\TranslatableServiceProvider') && method_exists($resource, 'getTranslations') ) {
             $results = $resource->getTranslations($attribute);
-        } elseif ( class_exists('\Dimsav\Translatable\TranslatableServiceProvider') ) {
-            $translations = $resource->translations()
-                ->get([config('translatable.locale_key'), $attribute])
-                ->toArray();
-            foreach ( $translations as $translation ) {
-                $results[$translation[config('translatable.locale_key')]] = $translation[$attribute];
-            }
+        } elseif ( class_exists('\Dimsav\Translatable\TranslatableServiceProvider') && method_exists($resource, 'translations') ) {
+            $results = $resource->translations->pluck($attribute, config('translatable.locale_key'));
+        } else {
+            $results = data_get($resource, $attribute);
         }
         return $results;
     }
@@ -75,12 +71,14 @@ class Translatable extends Field
     {
         if ( class_exists('\Spatie\Translatable\TranslatableServiceProvider') ) {
             parent::fillAttributeFromRequest($request, $requestAttribute, $model, $attribute);
-        } elseif ( class_exists('\Dimsav\Translatable\TranslatableServiceProvider') ) {
+        } elseif ( class_exists('\Dimsav\Translatable\TranslatableServiceProvider') && method_exists($resource, 'translateOrNew') ) {
             if ( is_array($request[$requestAttribute]) ) {
                 foreach ( $request[$requestAttribute] as $lang => $value ) {
                     $model->translateOrNew($lang)->{$attribute} = $value;
                 }
-	    }
+            }
+        } else {
+            parent::fillAttributeFromRequest($request, $requestAttribute, $model, $attribute);
         }
     }
 
@@ -203,5 +201,21 @@ class Translatable extends Field
 
         return true;
       }];
+    }
+
+    /**
+     * Display the field as raw HTML.
+     */
+    public function asHtml()
+    {
+        return $this->withMeta(['asHtml' => true]);
+    }
+
+    /**
+     * Truncate on Detail Page.
+     */
+    public function truncate()
+    {
+        return $this->withMeta(['truncate' => true]);
     }
 }

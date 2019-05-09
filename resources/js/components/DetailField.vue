@@ -3,7 +3,7 @@
         <template slot="value">
 
             <a 
-                class="inline-block font-bold cursor-pointer mr-2 animate-text-color select-none" 
+                class="inline-block font-bold cursor-pointer mr-2 animate-text-color select-none border-primary" 
                 :class="{ 'text-60': localeKey !== currentLocale, 'text-primary border-b-2': localeKey === currentLocale }"
                 :key="`a-${localeKey}`" 
                 v-for="(locale, localeKey) in field.locales"
@@ -13,8 +13,8 @@
             </a>
 
             <div class="mt-4">
-                <span v-if="field.value[currentLocale]" v-html="field.value[currentLocale]"></span>
-                <span v-else>—</span>
+                <div v-if="field.asHtml" v-html="value"></div>
+                <div v-else :class="{ 'truncate': field.truncate }">{{ value }}</div>
             </div>
 
         </template>
@@ -35,6 +35,12 @@ export default {
         changeTab(locale) {
             this.currentLocale = locale
         }
-    }
+    },
+
+    computed: {
+        value() {
+            return this.field.value[this.currentLocale] || '—'
+        }
+    },
 }
 </script>

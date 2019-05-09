@@ -1,13 +1,18 @@
 <template>
-    <default-field :field="field" :full-width-content="field.tiny">
-        <template slot="field">
-            <a 
-                class="inline-block font-bold cursor-pointer mr-2 animate-text-color select-none" 
-                :class="{ 'text-60': localeKey !== currentLocale, 'text-primary border-b-2': localeKey === currentLocale }"
-                :key="`a-${localeKey}`" 
-                v-for="(locale, localeKey) in field.locales"
-                @click="changeTab(localeKey)"
-            >
+    <field-wrapper>
+        <div class="w-1/5 px-8 py-6">
+            <slot>
+                <form-label :for="field.name">
+                    {{ field.name }}
+                </form-label>
+            </slot>
+        </div>
+        <div class="px-8 py-6" :class="computedWidth">
+            <a class="inline-block font-bold cursor-pointer mr-2 animate-text-color select-none border-primary"
+               :class="{ 'text-60': localeKey !== currentLocale, 'text-primary border-b-2': localeKey === currentLocale }"
+               :key="`a-${localeKey}`"
+               v-for="(locale, localeKey) in field.locales"
+               @click="changeTab(localeKey)">
                 {{ locale }}
             </a>
 
@@ -22,14 +27,13 @@
                 @keydown.tab="handleTab"
             ></textarea>
 
-            <div v-if="!field.singleField && field.trix" class="mt-4">
+            <div v-if="!field.singleField && field.trix" @keydown.stop class="mt-4">
                 <trix
                     ref="field"
                     name="trixman"
                     :value="value[currentLocale]"
                     placeholder=""
                     @change="handleChange"
-                    
                 />
             </div>
 
@@ -57,8 +61,11 @@
             <p v-if="hasError" class="my-2 text-danger">
                 {{ firstError }}
             </p>
-        </template>
-    </default-field>
+            <help-text class="help-text mt-2" v-if="field.helpText">
+                {{ field.helpText }}
+            </help-text>
+        </div>
+    </field-wrapper>
 </template>
 
 <script>
@@ -148,6 +155,15 @@ export default {
                     e.preventDefault();
                     this.changeTab(this.locales[currentIndex - 1]);
                 }
+            }
+        }
+    },
+
+    computed: {
+        computedWidth() {
+            return {
+                'w-1/2': !this.field.trix,
+                'w-4/5': this.field.trix
             }
         }
     }
