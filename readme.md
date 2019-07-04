@@ -1,3 +1,6 @@
+**This package has been deprecated. Please refer to [soluzione-software/nova-translatable-field](https://github.com/soluzione-software/nova-translatable-field)**.
+
+---
 # Nova Translatable Field
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/yeswedev/nova-translatable.svg?style=flat-square)](https://packagist.org/packages/yeswedev/nova-translatable)
 
